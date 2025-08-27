@@ -14,11 +14,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') {
       let filePath;
       if (req.url === '/') {
-        filePath = path.join(__dirname, 'public', 'index.html');
+        filePath = path.join(__dirname, 'pages', 'index.html');
       } else if (req.url === '/about') {
-        filePath = path.join(__dirname, 'public', 'about.html');
+        filePath = path.join(__dirname, 'pages', 'about.html');
+      } else if (req.url === '/contact') {
+        filePath = path.join(__dirname, 'pages', 'contact-me.html');
       } else {
-        throw new Error('Not found');
+        filePath = path.join(__dirname, 'pages', '404.html');
       }
       const data = await fs.readFile(filePath);
       res.setHeader('Content-Type', 'text/html');
