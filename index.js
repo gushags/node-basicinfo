@@ -1,40 +1,59 @@
-import http from 'http';
-import fs from 'fs/promises';
-import url from 'url';
-import path from 'path';
-const PORT = 8000;
+const express = require('express');
+const app = express();
+const path = require('path');
 
-// Get current path
-const __filename = url.fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// options for app.get
+const options = {
+  root: path.join(__dirname, 'pages'),
+  headers: {
+    'x-timestamp': Date.now(),
+    'x-sent': true,
+  },
+};
 
-const server = http.createServer(async (req, res) => {
-  try {
-    // check for Get
-    if (req.method === 'GET') {
-      let filePath;
-      if (req.url === '/') {
-        filePath = path.join(__dirname, 'pages', 'index.html');
-      } else if (req.url === '/about') {
-        filePath = path.join(__dirname, 'pages', 'about.html');
-      } else if (req.url === '/contact') {
-        filePath = path.join(__dirname, 'pages', 'contact-me.html');
-      } else {
-        filePath = path.join(__dirname, 'pages', '404.html');
-      }
-      const data = await fs.readFile(filePath);
-      res.setHeader('Content-Type', 'text/html');
-      res.write(data);
-      res.end();
-    } else {
-      throw new Error('Method not allowed');
-    }
-  } catch (error) {
-    res.writeHead(500, { 'Content-Type': 'text/plain' });
-    res.end('Server error');
+// error handler function in app.get
+function errorHandler(err, file) {
+  if (err) {
+    next(err);
+  } else {
+    console.log('Sent:', file);
   }
+}
+
+// homepage
+app.get('/', (req, res, next) => {
+  const fileName = 'index.html';
+  res.sendFile(fileName, options, (err) => errorHandler(err, fileName));
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// about page
+app.get('/about', (req, res, next) => {
+  const fileName = 'about.html';
+  res.sendFile(fileName, options, (err) => errorHandler(err, fileName));
+});
+
+// contact page
+app.get('/contact', (req, res, next) => {
+  const fileName = 'contact-me.html';
+  res.sendFile(fileName, options, (err) => errorHandler(err, fileName));
+});
+
+// handle any 404 status codes
+app.use((req, res, next) => {
+  res.status(404).sendFile('404.html', options, (err) => {
+    if (err) {
+      next(err);
+    } else {
+      console.log('Sent:', '404.html');
+    }
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, (error) => {
+  // This is important!
+  if (error) {
+    throw error;
+  }
+  console.log(`Express app listening on port ${PORT}!`);
 });
